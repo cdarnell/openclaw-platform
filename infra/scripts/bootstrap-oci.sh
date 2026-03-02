@@ -9,6 +9,20 @@ fi
 apt update
 apt install -y ca-certificates curl gnupg lsb-release software-properties-common jq unzip git ufw
 
+ARCH=$(dpkg --print-architecture)
+case "$ARCH" in
+  amd64)
+    VAULT_ARCH=linux_amd64
+    ;;
+  arm64)
+    VAULT_ARCH=linux_arm64
+    ;;
+  *)
+    echo "Unsupported architecture: $ARCH" >&2
+    exit 1
+    ;;
+esac
+
 # Docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --yes --dearmor -o /usr/share/keyrings/docker.gpg
 add-apt-repository "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -21,7 +35,7 @@ apt install -y wireguard wireguard-tools
 
 # Vault
 VAULT_VERSION=1.17.3
-curl -fsSL https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip -o /tmp/vault.zip
+curl -fsSL https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_${VAULT_ARCH}.zip -o /tmp/vault.zip
 unzip /tmp/vault.zip -d /usr/local/bin
 chmod +x /usr/local/bin/vault
 useradd --system --home /etc/vault.d --shell /bin/false vault || true
