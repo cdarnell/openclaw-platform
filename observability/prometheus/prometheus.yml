@@ -1,0 +1,60 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  - job_name: "openclaw-gateway"
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/gentoofoo-chain.pem
+      cert_file: /etc/prometheus/certs/monitoring.pem
+      key_file: /etc/prometheus/certs/monitoring.key
+      insecure_skip_verify: false
+    static_configs:
+      - targets: ["10.31.0.5:3000"]
+
+  - job_name: "openclaw-planner"
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/gentoofoo-chain.pem
+      cert_file: /etc/prometheus/certs/monitoring.pem
+      key_file: /etc/prometheus/certs/monitoring.key
+    static_configs:
+      - targets: ["10.31.0.6:3101"]
+
+  - job_name: "openclaw-executor"
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/gentoofoo-chain.pem
+      cert_file: /etc/prometheus/certs/monitoring.pem
+      key_file: /etc/prometheus/certs/monitoring.key
+    static_configs:
+      - targets: ["10.31.0.7:3102"]
+
+  - job_name: "n8n"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["openclaw-n8n:5679"]
+
+  - job_name: "vault"
+    metrics_path: /v1/sys/metrics
+    params:
+      format: [prometheus]
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/certs/gentoofoo-chain.pem
+      cert_file: /etc/prometheus/certs/monitoring.pem
+      key_file: /etc/prometheus/certs/monitoring.key
+    static_configs:
+      - targets: ["vault:8200"]
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["127.0.0.1:9101"]
+
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]

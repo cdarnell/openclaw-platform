@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: openclaw-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.listen-address=0.0.0.0:9090"
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: openclaw-loki
+    command: ["-config.file=/etc/loki/config.yml"]
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+    ports:
+      - "127.0.0.1:3100:3100"
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: openclaw-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: change_me
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - observability
+    depends_on:
+      - prometheus
+      - loki
+
+  vector:
+    image: timberio/vector:0.36.X-debian
+    container_name: openclaw-vector
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./vector/vector.toml:/etc/vector/vector.toml:ro
+    networks:
+      - observability
+    depends_on:
+      - loki
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.7.0
+    container_name: openclaw-node-exporter
+    pid: host
+    network_mode: host
+    command:
+      - "--web.listen-address=127.0.0.1:9101"
+      - "--path.rootfs=/host"
+    volumes:
+      - /:/host:ro
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: openclaw-cadvisor
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - observability
+
+networks:
+  observability:
+    driver: bridge
+
+volumes:
+  loki-data:
+  grafana-data:

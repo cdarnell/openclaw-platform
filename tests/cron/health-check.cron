@@ -1,0 +1,1 @@
+*/5 * * * * /opt/openclaw-platform/tests/health-check.sh /opt/openclaw-platform/tests/health-check.conf >> /var/log/openclaw/health.log 2>&1

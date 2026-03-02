@@ -1,0 +1,116 @@
+version: "3.9"
+
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - openclaw_internal
+  environment:
+    VAULT_ADDR: ${VAULT_ADDR:-https://vault.openclaw.internal:8200}
+    VAULT_CACERT: /certs/gentoofoo-chain.pem
+  volumes:
+    - ../pkis/dist:/certs:ro
+    - ./configs/openclaw:/etc/openclaw:ro
+
+services:
+  vault:
+    image: hashicorp/vault:1.17
+    container_name: openclaw-vault
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_LOCAL_CONFIG: |
+        listener "tcp" {
+          address     = "0.0.0.0:8200"
+          tls_cert_file = "/certs/vault-fullchain.pem"
+          tls_key_file  = "/certs/vault.key"
+        }
+        storage "file" {
+          path = "/vault/file"
+        }
+        disable_mlock = true
+    volumes:
+      - vault-data:/vault/file
+      - ../pkis/dist:/certs:ro
+    ports:
+      - "127.0.0.1:8200:8200"
+    networks:
+      - openclaw_internal
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16
+    container_name: openclaw-postgres
+    environment:
+      POSTGRES_USER: ${N8N_DB_USER:-n8n}
+      POSTGRES_PASSWORD: ${N8N_DB_PASSWORD:-n8n-pass}
+      POSTGRES_DB: ${N8N_DB_NAME:-n8n}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - openclaw_internal
+
+  n8n:
+    image: n8nio/n8n:1.74.1
+    container_name: openclaw-n8n
+    depends_on:
+      - postgres
+      - vault
+    environment:
+      N8N_HOST: ${N8N_HOST:-n8n.openclaw.internal}
+      N8N_PROTOCOL: https
+      N8N_PORT: 5678
+      N8N_EDITOR_BASE_URL: https://${N8N_HOST:-n8n.openclaw.internal}
+      N8N_METRICS: true
+      N8N_METRICS_PORT: 5679
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB_NAME:-n8n}
+      DB_POSTGRESDB_USER: ${N8N_DB_USER:-n8n}
+      DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD:-n8n-pass}
+      VAULT_ADDR: ${VAULT_ADDR:-https://vault.openclaw.internal:8200}
+      VAULT_ROLE_ID: ${N8N_VAULT_ROLE_ID:-}
+      VAULT_SECRET_ID: ${N8N_VAULT_SECRET_ID:-}
+    volumes:
+      - n8n-data:/home/node/.n8n
+      - ../pkis/dist:/certs:ro
+      - ./configs/n8n:/etc/n8n:ro
+    networks:
+      - openclaw_internal
+
+  gateway:
+    <<: *common
+    image: ghcr.io/gentoofoo/openclaw-gateway:latest
+    container_name: openclaw-gateway
+    command: ["gateway", "--config", "/etc/openclaw/gateway.toml"]
+    depends_on:
+      - vault
+
+  planner:
+    <<: *common
+    image: ghcr.io/gentoofoo/openclaw-planner:latest
+    container_name: openclaw-planner
+    command: ["planner", "--config", "/etc/openclaw/planner.toml"]
+    depends_on:
+      - gateway
+
+  executor:
+    <<: *common
+    image: ghcr.io/gentoofoo/openclaw-executor:latest
+    container_name: openclaw-executor
+    command: ["executor", "--config", "/etc/openclaw/executor.toml"]
+    depends_on:
+      - planner
+
+networks:
+  openclaw_internal:
+    driver: bridge
+
+volumes:
+  vault-data:
+  postgres-data:
+  n8n-data:

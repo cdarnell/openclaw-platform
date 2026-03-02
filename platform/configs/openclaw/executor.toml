@@ -1,0 +1,13 @@
+[network]
+listen_addr = "10.31.0.7:3102"
+cert_path   = "/certs/executor-fullchain.pem"
+key_path    = "/certs/executor.key"
+ca_path     = "/certs/gentoofoo-chain.pem"
+
+[planner]
+endpoint = "https://planner.openclaw.internal:3101"
+
+[vault]
+addr      = "https://vault.openclaw.internal:8200"
+role_id   = "${OPENCLAW_VAULT_ROLE_ID}"
+secret_id = "${OPENCLAW_VAULT_SECRET_ID}"

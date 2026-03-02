@@ -1,0 +1,33 @@
+{
+  "title": "OpenClaw Overview",
+  "uid": "openclaw-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Gateway Latency",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(gateway_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "WireGuard Tunnel",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "wireguard_peer_latest_handshake_seconds{peer=\"ollama\"}"
+        }
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["last"]},
+        "colorMode": "background"
+      }
+    }
+  ]
+}

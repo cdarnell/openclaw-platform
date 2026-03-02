@@ -1,0 +1,13 @@
+[network]
+listen_addr = "10.31.0.6:3101"
+cert_path   = "/certs/planner-fullchain.pem"
+key_path    = "/certs/planner.key"
+ca_path     = "/certs/gentoofoo-chain.pem"
+
+[ollama]
+endpoint = "${OLLAMA_ENDPOINT}"
+
+[vault]
+addr      = "https://vault.openclaw.internal:8200"
+role_id   = "${OPENCLAW_VAULT_ROLE_ID}"
+secret_id = "${OPENCLAW_VAULT_SECRET_ID}"

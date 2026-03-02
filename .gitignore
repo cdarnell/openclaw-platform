@@ -1,0 +1,9 @@
+pkis/dist/
+platform/.env
+platform/configs/**/certs/
+logs/
+.env
+**/*.pfx
+**/*.key
+**/*.pem
+vault-data/

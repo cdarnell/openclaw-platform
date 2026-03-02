@@ -1,0 +1,16 @@
+{
+  "title": "WireGuard Health",
+  "uid": "wireguard-health",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Peer Handshake Age",
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8},
+      "targets": [
+        {"expr": "time() - wireguard_latest_handshake_seconds", "legendFormat": "{{peer}}"}
+      ]
+    }
+  ]
+}

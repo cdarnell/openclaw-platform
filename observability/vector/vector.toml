@@ -1,0 +1,17 @@
+[sources.docker]
+type = "docker_logs"
+include_containers = ["openclaw-gateway", "openclaw-planner", "openclaw-executor", "openclaw-n8n", "openclaw-vault"]
+
+[transforms.parse_level]
+type = "remap"
+inputs = ["docker"]
+file = ""
+source = " .level = match(.message, r'(?i)(error|warn|info)') ?? \"info\" "
+
+[sinks.loki]
+type = "loki"
+inputs = ["parse_level"]
+endpoint = "http://loki:3100"
+encoding.codec = "json"
+labels.service = "{{ container_name }}"
+labels.level = "{{ level }}"

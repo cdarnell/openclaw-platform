@@ -1,0 +1,28 @@
+{
+  "title": "Vault Status",
+  "uid": "vault-status",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Sealed",
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 5},
+      "targets": [
+        {"expr": "vault_sealed"}
+      ],
+      "options": {
+        "reduceOptions": {"calcs": ["last"]},
+        "colorMode": "background"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Request Latency",
+      "gridPos": {"x": 6, "y": 0, "w": 18, "h": 10},
+      "targets": [
+        {"expr": "rate(vault_request_duration_seconds_sum[5m]) / rate(vault_request_duration_seconds_count[5m])", "legendFormat": "latency"}
+      ]
+    }
+  ]
+}
