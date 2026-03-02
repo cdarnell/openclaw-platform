@@ -18,19 +18,12 @@ services:
     cap_add:
       - IPC_LOCK
     environment:
-      VAULT_LOCAL_CONFIG: |
-        listener "tcp" {
-          address     = "0.0.0.0:8200"
-          tls_cert_file = "/certs/vault-fullchain.pem"
-          tls_key_file  = "/certs/vault.key"
-        }
-        storage "file" {
-          path = "/vault/file"
-        }
-        disable_mlock = true
+      VAULT_CONFIG_DIR: /vault/config
+    command: ["vault", "server", "-config=/vault/config/local.hcl"]
     volumes:
       - vault-data:/vault/file
       - ../pkis/dist:/certs:ro
+      - ./configs/vault/config.hcl:/vault/config/local.hcl:ro
     ports:
       - "127.0.0.1:8200:8200"
     networks:
